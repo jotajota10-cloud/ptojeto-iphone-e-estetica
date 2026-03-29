@@ -1,0 +1,73 @@
+from flask import Flask, render_template, request
+import urllib.parse
+
+app = Flask(__name__)
+
+# --- CONFIGURAÇÃO ---
+# Coloque aqui o número real da sua irmã (Ex: 55 + DDD + Número)
+NUMERO_WHATSAPP = "5551989250929" 
+NOME_ESTETICA = "Estética Profissional"
+
+# Lista de serviços atualizada com os novos preços e o novo serviço
+servicos = [
+    {"nombre": "Limpeza de Pele Profunda", "precio": "R$ 80"},
+    {"nombre": "Design de Sobrancelhas", "precio": "R$ 30"},
+    {"nombre": "Design de Sobrancelhas + Henna", "precio": "R$ 50"}
+]
+
+ESTILO = """
+<style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #fff5f8; color: #444; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 450px; border-top: 6px solid #d4af37; margin-bottom: 20px; }
+    h1, h2 { color: #d4af37; text-align: center; }
+    .servicio { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #eee; }
+    .btn { background: #d4af37; color: white; padding: 15px; text-decoration: none; border-radius: 10px; display: block; text-align: center; font-weight: bold; margin-top: 20px; border: none; width: 100%; cursor: pointer; }
+    .btn-ws { background: #25d366; margin-top: 10px; }
+    input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+</style>
+"""
+
+@app.route('/')
+def inicio():
+    lista_html = "".join([f'<div class="servicio"><span>{s["nombre"]}</span><b>{s["precio"]}</b></div>' for s in servicos])
+    return ESTILO + f'''
+        <div class="card">
+            <h1>🌸 {NOME_ESTETICA}</h1>
+            <h2>Nossos Serviços</h2>
+            {lista_html}
+            <a href="/consulta" class="btn">RESERVAR HORÁRIO</a>
+        </div>
+    '''
+
+@app.route('/consulta', methods=['GET', 'POST'])
+def formulario():
+    resultado = ""
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', 'Cliente')
+        duda = request.form.get('duda', 'Consulta')
+        
+        texto = urllib.parse.quote(f"Olá! Meu nome é {nombre}. Gostaria de agendar: {duda}")
+        link_ws = f"https://wa.me/{NUMERO_WHATSAPP}?text={texto}"
+        
+        resultado = f'''
+            <div style="background:#e8f5e9; padding:15px; border-radius:10px; text-align:center; margin-bottom:20px;">
+                <p style="color:#2e7d32;"><b>Dados registrados!</b></p>
+                <a href="{link_ws}" class="btn btn-ws" target="_blank">ENVIAR WHATSAPP ✅</a>
+            </div>
+        '''
+
+    return ESTILO + f'''
+        <div class="card">
+            <h2>Agendar Horário</h2>
+            {resultado}
+            <form method="post">
+                <input type="text" name="nombre" placeholder="Seu nome" required>
+                <textarea name="duda" placeholder="Qual serviço ou dúvida você tem?" rows="4" required></textarea>
+                <button type="submit" class="btn">1. CONFIRMAR DADOS</button>
+            </form>
+            <p style="text-align: center;"><a href="/" style="color:#999; text-decoration:none;">← Voltar</a></p>
+        </div>
+    '''
+
+if __name__ == '__main__':
+    app.run(debug=True)
